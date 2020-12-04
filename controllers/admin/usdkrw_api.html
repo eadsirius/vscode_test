@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+    <head lang="ko">
+        <meta charset="UTF-8">
+        <meta http-equiv="Content-Type" content="text/html" />
+        <style>
+            body {font-family: "맑은 고딕", Malgun Gothic, sans-serif; font-size: 18px;}
+            .usdarea {width: 90%; margin: 0 auto; padding: 50px 20px;
+                position: relative; text-align: center;
+                -webkit-box-shadow: 0 -50px 100px rgba(0, 0, 0, 0.3);
+                -moz-box-shadow: 0 -50px 100px rgba(0, 0, 0, 0.3);
+                box-shadow: 0 -50px 100px rgba(0, 0, 0, 0.3); font-size: 200%;
+                }
+            #USDKRW {background: #FFFFcf; border: 2px groove #fac32f; width: 90%; margin: 0 auto; padding: 20px; border-radius: 5px;}
+            #USDKRW_box {padding: 20px;width: 90%; margin: 0 auto;}
+        </style>
+        <script src="https://code.jquery.com/jquery-1.4.4.min.js"></script>
+        <script>
+            // 전역 변수 세팅
+            var usd = 0;
+            var alert_array = new Array();
+            
+            // 천단위 콤마 함수
+            function numberWithCommas(x) {
+                return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+            }
+            // 숫자 외 문자열 제거 함수
+            function numberDeleteChar(x) {
+                return x.toString().replace(/[^0-9]+/g, '');
+            }
+
+
+            // https://quotation-api-cdn.dunamu.com/v1/forex/recent?codes=FRX.KRWUSD 참고
+            // 달러 환율 함수 (ajax 동기식) <2017.09.18 수정>
+            function usdkrw(){
+            $.get('https://quotation-api-cdn.dunamu.com/v1/forex/recent?codes=FRX.KRWUSD', function(data) {
+                var data = data[0];
+                var buying = data['cashBuyingPrice'];
+                var selling = data['cashSellingPrice'];
+                var ttselling = data['ttSellingPrice'];
+                var ttbuyling = data['ttBuyingPrice'];
+                var usd = data['basePrice'];
+                var openusd = data['openingPrice'];
+                var chusd = data['changePrice'];
+
+                openusd_o = usd - openusd;
+                openusd_op = (chusd/usd)*100;
+                    openusd = openusd.toFixed(2);
+                    if (openusd_o > 0) { openusd_p = '<font color="#ff0000">+' + usd + ' 원 <small>▲ +' + chusd.toFixed(2) + '원 (' + openusd_op.toFixed(2) + '%) </small></font>';}
+                    else if (openusd_o < 0) { openusd_p = '<font color="#0051c7">' + usd + ' 원 <small>▼ ' + chusd.toFixed(2) + '원 (' + openusd_op.toFixed(2) + '%) </small></font>';}
+                    else { openusd_p = usd + ' 원 ' + chusd.toFixed(2) + '원 (' + openusd_op.toFixed(2) + '%)';};
+
+                var datenew = data['date'] + ' ' + data['time']                
+                $('#USDKRW').html('환율 기준 (1 미국 달러)<br>' + openusd_p);
+                // document.getElementById("usdkrw").innerHTML=('환율 : $1 = ' + usd + ', 적용시간 :' + datenow);
+                $('#USDKRW_box').html('살때 : ' + buying.toFixed(2) + '<br>팔때 : ' + selling.toFixed(2) + '<br>보낼때 : <font color="#ff0000"><b>' + selling.toFixed(2) + '</b></font><br>받을때 : ' + ttbuyling.toFixed(2) + '')
+                $("#lastUpdate").html(datenew);
+                });
+            }
+
+            // 달러 환율 함수 (ajax 동기식) <2017.09.18 수정>
+            function usdkrw__(){
+            $.get('http://api.manana.kr/exchange/rate/KRW/USD.json', function(data) {
+                var data = data[0];
+                var datenow = data['date'];
+                var usd = data['rate'];                
+                $('#USDKRW').html('환율 기준 (1 미국 달러)<br>' + usd.toFixed(2) + '원');
+                // document.getElementById("usdkrw").innerHTML=('환율 : $1 = ' + usd + ', 적용시간 :' + datenow);
+                });
+            }
+
+            // 현재 시간 갱신
+            function CurrentTime() {
+                var d = new Date();
+                $("#lastUpdate+").html(d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate() + ' ' + d.getHours() + ":" + d.getMinutes() + ":" + d.getSeconds());                
+            }
+            
+            // 환율 갱신 함수
+            function prouk() {
+                try {
+                    usdkrw(); // 환율
+                    CurrentTime(); // 갱신 시간
+                } catch(e){
+                    
+                } finally {
+                    setTimeout("prouk()", 60000); //60초후 재시작
+                }
+            }
+        </script>
+    </head>
+    <body onLoad="prouk()">
+        <div class=usdarea>
+        <!-- 환율 정보 -->
+        <h2>KEB 하나은행</h2>
+        <div id="USDKRW"></div>
+        <div id="USDKRW_box"></div>
+        <p id="lastUpdate"></p>        
+        </div>
+    </body>
+</html>
